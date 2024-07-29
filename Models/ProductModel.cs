@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TechPhone.Models
 {
@@ -11,10 +12,14 @@ namespace TechPhone.Models
         public string Slug { get; set; }
         [Required(ErrorMessage = "Hãy nhập mô tả sản phẩm:")]
         public string Description { get; set; }        
-        [Required(ErrorMessage = "Hãy nhập giá sản phẩm")]
+
+        [Required(ErrorMessage = "Hãy nhập giá sản phẩm")]       
         public decimal Price { get; set; }
         public int BrandId { get; set; }
         public int CategoryId { get; set; }       
+
+        public BrandModel Brand { get; set; }
+        public CategoryModel Category { get; set; }
         public string Image {  get; set; }
     }
 }

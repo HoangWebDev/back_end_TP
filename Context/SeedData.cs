@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 using TechPhone.Models;
 
 namespace TechPhone.Repository
@@ -19,8 +20,8 @@ namespace TechPhone.Repository
 
                 _context.Products.AddRange
                     (
-                        new ProductModel { Name = "Macbook", Slug = "Macbook", Description = "Macbook is Best", Image = "1.jpg", Price = 1234 },
-                        new ProductModel { Name = "Pc", Slug = "Pc", Description = "Pc is Best", Image = "2.jpg", Price = 1234 }
+                        new ProductModel { Name = "Macbook", Slug = "Macbook", Description = "Macbook is Best", Image = "1.jpg", Brand = apple, Category = macbook, Price = 1234 },
+                        new ProductModel { Name = "Pc", Slug = "Pc", Description = "Pc is Best", Image = "2.jpg", Brand = samsung, Category = pc, Price = 1234 }
                     );
 
                 _context.SaveChanges();

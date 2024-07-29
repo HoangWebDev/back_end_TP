@@ -5,27 +5,29 @@ using System.Threading.Tasks; //Tác vụ bất đông bộ
 using Microsoft.EntityFrameworkCore;
 using TechPhone.Models;
 using TechPhone.Repository;
+using TechPhone.Contracts;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TechPhone.Controllers
 {
+    [Authorize(Roles = "Admin")]    
     [Route("api/[controller]")]
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly DataContext _context;
-
-        public ProductController(DataContext context)
+        private IProductRepository _productRepository;        
+        
+        public ProductController(IProductRepository productRepository)
         {
-            _context = context; //Thêm vàu DataContext qua contructor
+            _productRepository = productRepository;            
         }
 
         // GET: api/Product
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductModel>>> GetProducts()
+        public async Task<IEnumerable<ProductModel>> GetProducts()
         {
             //Lấy danh sách tất cả sản phẩm
-            return await _context.Products                                        
-                                        .ToListAsync();
+            return await _productRepository.GetAll();
         }
 
         // GET: api/Product/5
@@ -33,19 +35,15 @@ namespace TechPhone.Controllers
         public async Task<ActionResult<ProductModel>> GetProduct(int id)
         {
             //Tìm sản phẩm theo id
-            var product = await _context.Products                                  
-                .FindAsync(id);
-
+            var product = await _productRepository.GetById(id);
             if (product == null)
             {
-                //Nếu không có báo lỗi 404
                 return NotFound();
             }
-
             return product;
         }
 
-        // PUT: api/Product/5
+        //// PUT: api/Product/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProduct(int id, ProductModel product)
         {
@@ -56,69 +54,34 @@ namespace TechPhone.Controllers
             }
 
             //Tìm sản phẩm theo id
-            var existingProduct = await _context.Products.FindAsync(id);
+            var existingProduct = await _productRepository.GetById(id);
             if (existingProduct == null)
             {
                 return NotFound();
-            }
+            }            
 
-            // Cập nhật các thuộc tính của sản phẩm
-            existingProduct.Name = product.Name;
-            existingProduct.Slug = product.Slug;
-            existingProduct.Description = product.Description;
-            existingProduct.Price = product.Price;
-            existingProduct.BrandId = product.BrandId;
-            existingProduct.CategoryId = product.CategoryId;
-            existingProduct.Image = product.Image;
 
-            // Kiểm tra xem BrandId và CategoryId có tồn tại không
-            var brandExists = await _context.Brands.AnyAsync(b => b.Id == product.BrandId);
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == product.CategoryId);
-
-            if (!brandExists || !categoryExists)
-            {
-                return BadRequest("Invalid Brand or Category");
-            }
-
-            //Lưu vào cơ sở dữ liệu
-            await _context.SaveChangesAsync();          
+            // Cập nhật sản phẩm trong cơ sở dữ liệu
+            await _productRepository.UpdateProduct(product, id);            
 
             return NoContent();
         }
 
-        // POST: api/Product
+        //// POST: api/Product
         [HttpPost]
         public async Task<ActionResult<ProductModel>> PostProduct(ProductModel product)
-        {
-            // Kiểm tra xem BrandId và CategoryId có tồn tại không
-            var brandExists = await _context.Brands.AnyAsync(b => b.Id == product.BrandId);
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == product.CategoryId);
-
-            if (!brandExists || !categoryExists)
-            {
-                return BadRequest("Invalid Brand or Category");
-            }
-
-                _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+        {            
+                await _productRepository.InsertProduct(product);
+                return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);            
         }
 
-        // DELETE: api/Product/5
+        //// DELETE: api/Product/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            await _productRepository.DeleteProduct(id);            
 
             return NoContent();
-        }      
+        }
     }
 }
